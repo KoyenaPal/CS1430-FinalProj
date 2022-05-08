@@ -1,34 +1,57 @@
+import random
+
 import tensorflow as tf
 
-from prep import shapes_batch_gen_x, shapes_batch_gen_y, save_image
+from prep import shapes_gen, save_shapes_image, save_coco_image, shape_embed
 from utils import CustomModelSaver
 from model import Holly
 import hyperparameters as hp
 
+def my_loss_fn(y_true, y_pred):
+    squared_difference = tf.square(tf.square(y_true - y_pred))
+    return tf.reduce_mean(squared_difference, axis=[1,2])
 
 def main():
-    # load, prep, and batch image data along with label data
-    callback_list = [
-        tf.keras.callbacks.TensorBoard(
-            log_dir=hp.logs_path,
-            update_freq='batch',
-            profile_batch=0),
-        CustomModelSaver(hp.checkpoint_path, hp.max_num_weights)
-    ]
+    # Holly = keras.models.load_model('./checkpoints/weights')
+    # Holly.load_weights('./checkpoints/weights')
 
-    b = next(shapes_batch_gen_x)
-    print(b[0][0].shape)
-    print(b[1].shape)
-    # inputs = b[0]
-    # labs = b[1]
-    # print(len(inputs))
-    # print(len(labs))
+    train_loss = my_loss_fn
+    train_metric = tf.keras.metrics.MeanSquaredError()
+    optimizer = tf.keras.optimizers.SGD(learning_rate=hp.learning_rate, momentum=hp.momentum)
 
-    # i0 = inputs[0]
-    # print(len(i0))
-    # print(i0[0].shape)
+    Holly.compile(loss=train_loss, metrics=[train_metric], optimizer=optimizer)
 
-    Holly.train_on_batch(next(shapes_batch_gen_x), y=next(shapes_batch_gen_y))
+    Holly.summary();
+
+
+    for epoch in range(hp.num_epochs):
+        gen = shapes_gen()
+
+        for batch, (x, y) in enumerate(gen):
+            Holly.train_on_batch(x, y)
+            tf.summary.scalar('loss', train_metric.result(), step=batch)
+
+        template = 'Epoch {}, Loss: {}'
+        print (template.format(epoch+1, train_metric.result()))
+
+    gen = shapes_gen(english=True)
+
+    print("Saving model weights...")
+    Holly.save('./checkpoints/weights')
+
+    print("Saving generated image selection...")
+    for batch, ((imgs, shapes), _) in enumerate(gen):
+        ind = random.randrange(hp.batch_size)
+        img = imgs[ind:ind+1]
+        shape = shapes[ind]
+        shapevec = shape_embed([shape])
+        output = Holly((img, shapevec)).numpy()[0]
+        # print(output.shape)
+
+        save_shapes_image(output, "./augments/"+shape+str(batch)+".png")
+
+        
+
 
 if __name__ == '__main__':
         main()

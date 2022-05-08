@@ -1,5 +1,7 @@
 import random
 import os
+import json
+
 
 import numpy as np
 import tensorflow as tf
@@ -11,8 +13,16 @@ import hyperparameters as hp
 
 
 
+_bert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+
+
+
+
 def int2bits(num):
-    return np.array([int(x) for x in list(np.binary_repr(num, width=4))])
+    bits = [int(x) for x in list(np.binary_repr(num, width=4))]
+    rv = bits
+    return np.array(rv).flatten()
+
 
 shape2vec = {
     "Circle": int2bits(0),
@@ -24,6 +34,9 @@ shape2vec = {
     "Square": int2bits(6),
     "Star": int2bits(7),
     "Triangle": int2bits(8)}
+
+# print(shape2vec['Triangle'])
+# print(shape2vec['Star'])
 
 def shape_embed(labels):
     return np.array([shape2vec[l] for l in labels])
@@ -37,6 +50,17 @@ def _load_image(path, prepper=None):
 
     if len(img.shape) == 2:
         img = np.stack([img, img, img], axis=-1)
+
+    # augmentor = tf.keras.preprocessing.image.ImageDataGenerator(
+    #     preprocessing_function=prepper,
+    #     rotation_range=2.0,
+    #     brightness_range=[0.95, 1.05],
+    #     shear_range=5.0,
+    #     zoom_range=[0.95, 1.05],
+    #     fill_mode='nearest',
+    #     horizontal_flip=True)
+
+    # img = augmentor.random_transform(img)
 
     return prepper(img) if prepper else img
 
@@ -96,16 +120,7 @@ def _calc_mean_and_std(dir_path, file_ext):
 
 
 
-def _make_shapes_batch_iters(dir_path, prepper):
-
-    augmentor = tf.keras.preprocessing.image.ImageDataGenerator(
-        preprocessing_function=prepper,
-        rotation_range=2.0,
-        brightness_range=[0.95, 1.05],
-        shear_range=5.0,
-        zoom_range=[0.95, 1.05],
-        fill_mode='nearest',
-        horizontal_flip=True)
+def _make_shapes_batch_iters(dir_path, prepper, english=False):
 
     filenames = []
     shapes = []
@@ -118,43 +133,116 @@ def _make_shapes_batch_iters(dir_path, prepper):
     n_files = len(filenames)
     rounded = n_files - (n_files % hp.batch_size)
     n_batches = rounded / hp.batch_size
-    print(n_batches)
     n_batches = int(n_batches)
 
     filenames = np.array(filenames[:rounded])
     # shapes = _bert_model.encode(shapes[:rounded])
-    shapes = shape_embed(shapes[:rounded])
+    shapes = shapes[:rounded]
 
-    perm = np.random.permutation(len(shapes))
-    fchunks = np.split(filenames[perm], n_batches)
-    schunks= np.split(shapes[perm], n_batches)
+    if not english:
+        shapes = shape_embed(shapes)
+
+    pairs = list(zip(filenames, shapes))
+    np.random.shuffle(pairs)
+    filenames, shapes = list(zip(*pairs))
+        
+    fchunks = np.split(np.array(filenames), n_batches)
+    schunks= np.split(np.array(shapes), n_batches)
 
     def xs():
         for i in range(n_batches):
-            imgs = [_load_image(f, prepper) for f in fchunks[i]]
-            imgs = np.array([augmentor.random_transform(img) for img in imgs])
-            yield imgs, schunks[i]
+            imgs = np.array([_load_image(f, prepper) for f in fchunks[i]])
+            yield (imgs, schunks[i]), imgs
     
-    def ys():
+    return xs()
+
+
+
+
+def _make_coco_batch_iters(dir_path, anno_path, prepper, english=False):
+
+    filenames = {}
+    descs = {}
+
+    for root, _, files in os.walk(dir_path):
+        for name in files:
+            if name.endswith('.jpg'):
+                img_id = int(name.partition('.')[0])
+                filenames[img_id] = os.path.join(root, name)
+                descs[img_id] = []
+
+    anno_file = open(anno_path)
+    data = json.load(anno_file)
+    print(data.keys())
+    img_info = data['annotations']
+
+    for d in img_info:
+        embed = d['caption']
+        if english:
+            embed = _bert_model.encode(d['caption'])
+        descs[d['image_id']].append(embed)
+
+    print(descs)
+    print(filenames)
+
+    pairs = []
+
+    for img_id, fname in filenames:
+        for desc in descs[img_id]:
+            pairs.append(fname, desc)
+        
+    n_pairs = len(pairs)
+    rounded = n_pairs - (n_pairs % hp.batch_size)
+    n_batches = rounded / hp.batch_size
+    n_batches = int(n_batches)
+
+    pairs = np.array(pairs[:rounded])
+    np.random.shuffle(pairs)
+
+    filenames, descs = list(zip(*pairs))
+        
+    fchunks = np.split(np.array(filenames), n_batches)
+    dchunks = np.split(np.array(descs), n_batches)
+
+    def xs():
         for i in range(n_batches):
-            imgs = [_load_image(f, prepper) for f in fchunks[i]]
-            imgs = np.array([augmentor.random_transform(img) for img in imgs])
-            yield imgs
-
-    return xs(), ys()
-
+            imgs = np.array([_load_image(f, prepper) for f in fchunks[i]])
+            yield (imgs, dchunks[i]), imgs
+    
+    return xs()
 
 
 
-mean, std = _calc_mean_and_std(hp.path_to_shapes_dir, '.png')
-_prepper = _make_prepper(mean, std)
-ender = _make_ender(mean, std)
 
-def save_image(img, path, ender):
-    img = ender(img)
+shapes_mean, shapes_std = _calc_mean_and_std(hp.path_to_shapes_dir, '.png')
+_shapes_prepper = _make_prepper(shapes_mean, shapes_std)
+_shapes_ender = _make_ender(shapes_mean, shapes_std)
+
+coco_mean, coco_std = _calc_mean_and_std(hp.path_to_coco_img_dir, '.jpg')
+_coco_prepper = _make_prepper(coco_mean, coco_std)
+_coco_ender = _make_ender(coco_mean, coco_std)
+
+def save_shapes_image(img, path):
+    img = _shapes_ender(img)
     img = img * 255.
+    # img = np.clip(img, 0, 255)
     img = img.astype(np.uint8)
+    img = Image.fromarray(img)
     img.save(path)
 
-_bert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-shapes_batch_gen_x, shapes_batch_gen_y = _make_shapes_batch_iters(hp.path_to_shapes_dir, _prepper)
+def save_coco_image(img, path):
+    img = _coco_ender(img)
+    img = img * 255.
+    # img = np.clip(img, 0, 255)
+    img = img.astype(np.uint8)
+    img = Image.fromarray(img)
+    img.save(path)
+
+
+def shapes_gen(english=False):
+    """Returns a fresh iterator over all shapes batches each call"""
+    return _make_shapes_batch_iters(hp.path_to_shapes_dir, _shapes_prepper, english)
+
+def coco_gen(english=False):
+    """Returns a fresh iterator over all coco batches each call"""
+    return _make_coco_batch_iters(hp.path_to_coco_img_dir, hp.path_to_coco_annos, _coco_prepper, english)

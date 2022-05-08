@@ -1,6 +1,8 @@
 /.env/
 /data/
 /augments/
+/code/augments/
+/code/checkpoints/
 /activate
 __pycache__/
 logs/
