@@ -25,13 +25,9 @@ class Holly(tf.keras.Model):
                 self.en_embedding = tf.Variable(tf.random.truncated_normal(
                     [self.english_vocab_size, self.embedding_size], stddev=self.stddev))
 
-                # Create positional encoder layers
-                self.fr_position = transformer.Position_Encoding_Layer(self.french_window_size, self.embedding_size)
-                self.en_position = transformer.Position_Encoding_Layer(self.english_window_size, self.embedding_size)
+                # prebuilt encoding layer
+                # 
 
-                # Define encoder and decoder layers:
-                self.encoder = transformer.Transformer_Block(self.embedding_size, False)
-                self.decoder = transformer.Transformer_Block(self.embedding_size, True)
 
                 # Seems like embedding size is pretty constant. That's why we need this final dense layer, to take it to vocab size.
                 # It's weird, but you CAN do all the steps of the decoder at once. It's just, each word of the output (there will be window_size words)
