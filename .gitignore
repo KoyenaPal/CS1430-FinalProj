@@ -2,3 +2,5 @@
 /data/
 /augments/
 /activate
+__pycache__/
+logs/

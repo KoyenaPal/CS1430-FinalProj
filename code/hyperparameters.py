@@ -4,7 +4,9 @@ paths!
 path_to_coco_img_dir = '../data/coco/images/'
 path_to_coco_annos = '../data/coco/annotations/captions_val2017.json'
 path_to_shapes_dir = '../data/shapes/'
+
 checkpoint_path = '../checkpoints/'
+logs_path = '../logs/'
 
 """
 Number of epochs. If you experiment with more complex networks you
@@ -29,7 +31,7 @@ momentum = 0.01
 Resize image size for task 1. Task 3 must have an image size of 224,
 so that is hard-coded elsewhere.
 """
-img_size = 224
+img_size = 128
 
 """
 Sample size for calculating the mean and standard deviation of the

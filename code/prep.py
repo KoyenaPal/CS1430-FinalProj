@@ -1,20 +1,38 @@
 import random
+import os
 
+import numpy as np
+import tensorflow as tf
 from sentence_transformers import SentenceTransformer
+from PIL import Image
 
 import hyperparameters as hp
 
 
 
 
-_bert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-shapes_batch_gen = make_shapes_batch_generator(hp.path_to_shapes_dir)
+def int2bits(num):
+    return np.array([int(x) for x in list(np.binary_repr(num, width=4))])
+
+shape2vec = {
+    "Circle": int2bits(0),
+    "Heptagon": int2bits(1),
+    "Hexagon": int2bits(2),
+    "Nonagon": int2bits(3),
+    "Octagon": int2bits(4),
+    "Pentagon": int2bits(5),
+    "Square": int2bits(6),
+    "Star": int2bits(7),
+    "Triangle": int2bits(8)}
+
+def shape_embed(labels):
+    return np.array([shape2vec[l] for l in labels])
 
 
 
 
 def _load_image(path, prepper=None):
-    img = Image.open(f).resize(hp.img_size, hp.img_size)
+    img = Image.open(path).resize((hp.img_size, hp.img_size))
     img = np.array(img, dtype=np.float32) / 255.
 
     if len(img.shape) == 2:
@@ -25,50 +43,29 @@ def _load_image(path, prepper=None):
 
 
 
-def make_shapes_batch_generator(dir_path):
-    mean, std = _calc_mean_and_std(hp.path_to_img_dir)
-    prepper = _make_prepper(mean, std)
+def _standardize(img, mean, std):
+    return (img - mean) / std
 
-    augmentor = tf.keras.preprocessing.image.ImageDataGenerator(
-        preprocessing_function=prepper,
-        rotation_range=2.0,
-        brightness_range=[0.95, 1.05],
-        shear_range=5.0,
-        zoom_range=[0.95, 1.05],
-        fill_mode='nearest',
-        horizontal_flip=True)
-
-    filenames = []
-    for root, _, files in os.walk(dir_path):
-        for name in files:
-            if name.endswith('.png'):
-                file_list.append(os.path.join(root, name))
-
-    n_files = len(file_list)
-    rounded = n_files - (n_files % hp.batch_size)
-    n_batches = rounded / hp.batch_size
-
-    filenames = file_list[0:rounded]
-    shapes = _bert_model.encode([s.partition('_') for s in file_list])
-
-    filenames_batched = np.split(np.array(file_list), n_batches).tolist()
-    shapes_batched = np.split(np.array(file_list), n_batches).tolist()
-
-    batches = list(zip(files_batched, shapes_batched))
-    random.shuffle(batches)
-
-    while batches:
-        filenames, shapes = batches.pop()
-
-        imgs = [_load_image(f, prepper) for f in names]
-        imgs = [augmentor.random_transform(img) for img in imgs]
-
-        yield (imgs, shapes)
+def _destandardize(img, mean, std):
+    return (img * std) + mean
 
 
 
 
-def _calc_mean_and_std(dir_path, file_ext)
+def _make_prepper(mean, std):
+    def foo(img):
+        return _standardize(img, mean, std)
+    return foo
+
+def _make_ender(mean, std):
+    def foo(img):
+        return _destandardize(img, mean, std)
+    return foo
+
+
+
+
+def _calc_mean_and_std(dir_path, file_ext):
     """ Calculate mean and standard deviation of a sample of the images in path_to_dir """
 
     # Get list of all images in training directory
@@ -99,14 +96,65 @@ def _calc_mean_and_std(dir_path, file_ext)
 
 
 
-def _standardize(img, mean, std):
-    return (img - mean) / std
+def _make_shapes_batch_iters(dir_path, prepper):
+
+    augmentor = tf.keras.preprocessing.image.ImageDataGenerator(
+        preprocessing_function=prepper,
+        rotation_range=2.0,
+        brightness_range=[0.95, 1.05],
+        shear_range=5.0,
+        zoom_range=[0.95, 1.05],
+        fill_mode='nearest',
+        horizontal_flip=True)
+
+    filenames = []
+    shapes = []
+    for root, _, files in os.walk(dir_path):
+        for name in files:
+            if name.endswith('.png'):
+                filenames.append(os.path.join(root, name))
+                shapes.append(name.partition('_')[0])
+
+    n_files = len(filenames)
+    rounded = n_files - (n_files % hp.batch_size)
+    n_batches = rounded / hp.batch_size
+    print(n_batches)
+    n_batches = int(n_batches)
+
+    filenames = np.array(filenames[:rounded])
+    # shapes = _bert_model.encode(shapes[:rounded])
+    shapes = shape_embed(shapes[:rounded])
+
+    perm = np.random.permutation(len(shapes))
+    fchunks = np.split(filenames[perm], n_batches)
+    schunks= np.split(shapes[perm], n_batches)
+
+    def xs():
+        for i in range(n_batches):
+            imgs = [_load_image(f, prepper) for f in fchunks[i]]
+            imgs = np.array([augmentor.random_transform(img) for img in imgs])
+            yield imgs, schunks[i]
+    
+    def ys():
+        for i in range(n_batches):
+            imgs = [_load_image(f, prepper) for f in fchunks[i]]
+            imgs = np.array([augmentor.random_transform(img) for img in imgs])
+            yield imgs
+
+    return xs(), ys()
 
 
 
 
-def _make_standardizer(mean, std):
-    def foo(img):
-        return _standardize(img, mean, std)
+mean, std = _calc_mean_and_std(hp.path_to_shapes_dir, '.png')
+_prepper = _make_prepper(mean, std)
+ender = _make_ender(mean, std)
 
-    return foo
+def save_image(img, path, ender):
+    img = ender(img)
+    img = img * 255.
+    img = img.astype(np.uint8)
+    img.save(path)
+
+_bert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+shapes_batch_gen_x, shapes_batch_gen_y = _make_shapes_batch_iters(hp.path_to_shapes_dir, _prepper)
