@@ -1,10 +1,10 @@
-
-
-
-
+"""
+paths!
+"""
 path_to_coco_img_dir = '../data/coco/images/'
 path_to_coco_annos = '../data/coco/annotations/captions_val2017.json'
 path_to_shapes_dir = '../data/shapes/'
+checkpoint_path = '../checkpoints/'
 
 """
 Number of epochs. If you experiment with more complex networks you
