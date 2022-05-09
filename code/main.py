@@ -1,4 +1,6 @@
 import random
+from datetime import datetime, date
+import os
 
 import tensorflow as tf
 
@@ -8,12 +10,23 @@ from model import Holly
 import hyperparameters as hp
 
 def my_loss_fn(y_true, y_pred):
-    squared_difference = tf.square(tf.square(y_true - y_pred))
+    # squared_difference = tf.square(tf.square(y_true - y_pred))
+    squared_difference = tf.square(y_true - y_pred)
     return tf.reduce_mean(squared_difference, axis=[1,2])
 
 def main():
-    # Holly = keras.models.load_model('./checkpoints/weights')
-    # Holly.load_weights('./checkpoints/weights')
+    
+    for root, _, files in os.walk("./checkpoints/"):
+        files = sorted(files, reverse=True)
+        print(files)
+        for f in files:
+            l,m,r = f.partition('.')
+            if r == 'index':
+                Holly.load_weights('./checkpoints/' + l)
+                print("Found model to continue training!")
+                break
+        break
+            
 
     train_loss = my_loss_fn
     train_metric = tf.keras.metrics.MeanSquaredError()
@@ -37,7 +50,8 @@ def main():
     gen = shapes_gen(english=True)
 
     print("Saving model weights...")
-    Holly.save('./checkpoints/weights')
+    now = datetime.now()
+    Holly.save_weights('./checkpoints/weights__' + date.today().isoformat() + "__" + "{}-{}".format(str(now.hour).zfill(2), str(now.minute).zfill(2)))
 
     print("Saving generated image selection...")
     for batch, ((imgs, shapes), _) in enumerate(gen):
