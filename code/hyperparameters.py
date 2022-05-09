@@ -51,4 +51,4 @@ max_num_weights = -1
 Defines the number of training examples per batch.
 You don't need to modify this.
 """
-batch_size = 32
+batch_size = 64

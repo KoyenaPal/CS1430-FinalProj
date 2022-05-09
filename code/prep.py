@@ -149,12 +149,9 @@ def _make_shapes_batch_iters(dir_path, prepper, english=False):
     fchunks = np.split(np.array(filenames), n_batches)
     schunks= np.split(np.array(shapes), n_batches)
 
-    def xs():
-        for i in range(n_batches):
-            imgs = np.array([_load_image(f, prepper) for f in fchunks[i]])
-            yield (imgs, schunks[i]), imgs
-    
-    return xs()
+    for i in range(n_batches):
+        imgs = np.array([_load_image(f, prepper) for f in fchunks[i]])
+        yield (imgs, schunks[i]), imgs
 
 
 
