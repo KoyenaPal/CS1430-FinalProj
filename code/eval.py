@@ -3,13 +3,13 @@ import random
 
 import tensorflow as tf
 
-from prep import shapes_gen, save_shapes_image, save_coco_image, shape_embed
+from prep import shapes_gen, save_shapes_image, shape_embed
 from model import Holly
 import hyperparameters as hp
 
 def load_recent_priority_model():
     for root, dirs, _ in os.walk("./priority/"):
-        dirs = sorted(dirs)
+        dirs = sorted(dirs, reverse=True)
         print(dirs)
 
         for d in dirs:
@@ -56,7 +56,7 @@ def main():
         ind = random.randrange(hp.batch_size)
         img = imgs[ind:ind+1]
         shape = shapes[ind]
-        shapevec = shape_embed([shape])
+        shapevec = shape_embed(["Triangle"])
         output = Holly((img, shapevec)).numpy()[0]
 
         save_shapes_image(output, "./eval/"+shape+str(batch)+"-generated.png")

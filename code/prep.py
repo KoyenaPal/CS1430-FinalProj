@@ -44,23 +44,23 @@ def shape_embed(labels):
 
 
 
-def _load_image(path):
+def _load_image(path, augment=False):
     img = Image.open(path).resize((hp.img_size, hp.img_size))
     img = (np.array(img, dtype=np.float32) / 127.5) - 1.
 
     if len(img.shape) == 2:
         img = np.stack([img, img, img], axis=-1)
 
-    # augmentor = tf.keras.preprocessing.image.ImageDataGenerator(
-    #     preprocessing_function=prepper,
-    #     rotation_range=2.0,
-    #     brightness_range=[0.95, 1.05],
-    #     shear_range=5.0,
-    #     zoom_range=[0.95, 1.05],
-    #     fill_mode='nearest',
-    #     horizontal_flip=True)
+    if augment:
+        augmentor = tf.keras.preprocessing.image.ImageDataGenerator(
+            rotation_range=2.0,
+            brightness_range=[0.95, 1.05],
+            shear_range=5.0,
+            zoom_range=[0.95, 1.05],
+            fill_mode='nearest',
+            horizontal_flip=True)
 
-    # img = augmentor.random_transform(img)
+        img = augmentor.random_transform(img)
 
     return img
 
@@ -176,57 +176,54 @@ def _make_shapes_batch_iters(dir_path, english=False):
 
 
 
-# def _make_coco_batch_iters(dir_path, anno_path, prepper, english=False):
+def _make_coco_batch_iters(dir_path, anno_path, prepper, english=False):
 
-#     filenames = {}
-#     descs = {}
+    filenames = {}
+    descs = {}
 
-#     for root, _, files in os.walk(dir_path):
-#         for name in files:
-#             if name.endswith('.jpg'):
-#                 img_id = int(name.partition('.')[0])
-#                 filenames[img_id] = os.path.join(root, name)
-#                 descs[img_id] = []
+    for root, _, files in os.walk(dir_path):
+        for name in files:
+            if name.endswith('.jpg'):
+                img_id = int(name.partition('.')[0])
+                filenames[img_id] = os.path.join(root, name)
+                descs[img_id] = []
 
-#     anno_file = open(anno_path)
-#     data = json.load(anno_file)
-#     print(data.keys())
-#     img_info = data['annotations']
+    anno_file = open(anno_path)
+    data = json.load(anno_file)
+    print(data.keys())
+    img_info = data['annotations']
 
-#     for d in img_info:
-#         embed = d['caption']
-#         if english:
-#             embed = _bert_model.encode(d['caption'])
-#         descs[d['image_id']].append(embed)
+    for d in img_info:
+        embed = d['caption']
+        if english:
+            embed = _bert_model.encode(d['caption'])
+        descs[d['image_id']].append(embed)
 
-#     print(descs)
-#     print(filenames)
+    print(descs)
+    print(filenames)
 
-#     pairs = []
+    pairs = []
 
-#     for img_id, fname in filenames:
-#         for desc in descs[img_id]:
-#             pairs.append(fname, desc)
+    for img_id, fname in filenames:
+        for desc in descs[img_id]:
+            pairs.append(fname, desc)
         
-#     n_pairs = len(pairs)
-#     rounded = n_pairs - (n_pairs % hp.batch_size)
-#     n_batches = rounded / hp.batch_size
-#     n_batches = int(n_batches)
+    n_pairs = len(pairs)
+    rounded = n_pairs - (n_pairs % hp.batch_size)
+    n_batches = rounded / hp.batch_size
+    n_batches = int(n_batches)
 
-#     pairs = np.array(pairs[:rounded])
-#     np.random.shuffle(pairs)
+    pairs = np.array(pairs[:rounded])
+    np.random.shuffle(pairs)
 
-    # filenames, descs = list(zip(*pairs))
+    filenames, descs = list(zip(*pairs))
         
-    # fchunks = np.split(np.array(filenames), n_batches)
-    # dchunks = np.split(np.array(descs), n_batches)
+    fchunks = np.split(np.array(filenames), n_batches)
+    dchunks = np.split(np.array(descs), n_batches)
 
-    # def xs():
-    #     for i in range(n_batches):
-    #         imgs = np.array([_load_image(f, prepper) for f in fchunks[i]])
-    #         yield (imgs, dchunks[i]), imgs
-    
-    # return xs()
+    for i in range(n_batches):
+        imgs = np.array([_load_image(f, prepper) for f in fchunks[i]])
+        yield (imgs, dchunks[i]), imgs
 
 
 
@@ -245,6 +242,6 @@ def shapes_gen(english=False):
     """Returns a fresh iterator over all shapes batches each call"""
     return _make_shapes_batch_iters(hp.path_to_shapes_dir, english)
 
-# def coco_gen(english=False):
-#     """Returns a fresh iterator over all coco batches each call"""
-#     return _make_coco_batch_iters(hp.path_to_coco_img_dir, hp.path_to_coco_annos, _coco_prepper, english)
+def coco_gen(english=False):
+    """Returns a fresh iterator over all coco batches each call"""
+    return _make_coco_batch_iters(hp.path_to_coco_img_dir, hp.path_to_coco_annos, english)
