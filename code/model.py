@@ -71,8 +71,8 @@ combo = layers.Dense(1024, activation="leaky_relu", kernel_regularizer=kernel_l2
 combo = layers.LayerNormalization(axis=[1])(combo)
 combo = layers.Dense(1024, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
 combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(1024, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
-combo = layers.LayerNormalization(axis=[1])(combo)
+# combo = layers.Dense(1024, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
+# combo = layers.LayerNormalization(axis=[1])(combo)
 combo = layers.Dense(1024, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
 combo = layers.LayerNormalization(axis=[1])(combo)
 
