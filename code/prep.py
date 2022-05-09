@@ -194,12 +194,9 @@ def _make_coco_batch_iters(dir_path, anno_path, prepper, english=False):
     img_info = data['annotations']
 
     info_len = len(img_info)
-    print(info_len)
     print("loading descriptions... [", end="", flush=True)
     for i, d in enumerate(img_info):
         embed = d['caption']
-        if not english:
-            embed = _bert_model.encode(embed)
         descs[d['image_id']].append(embed)
 
         if (i+1) % (hp.batch_size*8) == 0:
@@ -227,7 +224,8 @@ def _make_coco_batch_iters(dir_path, anno_path, prepper, english=False):
 
     for i in range(n_batches):
         imgs = np.array([_load_image(f) for f in fchunks[i]])
-        yield (imgs, dchunks[i]), imgs
+        vchunks = bert.encode(dchunks[i])
+        yield (imgs, vchunks), imgs
 
 
 
