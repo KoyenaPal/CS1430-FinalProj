@@ -25,9 +25,10 @@ def sec2hms(sec):
     return str(sec_h).zfill(2), str(sec_m).zfill(2), str(sec).zfill(2)
 
 def save_weights(model):
-    print("Saving model weights...")
     now = datetime.now()
-    model.save_weights('./checkpoints/weights__' + date.today().isoformat() + "__" + "{}-{}".format(str(now.hour).zfill(2), str(now.minute).zfill(2)))
+    filename = './checkpoints/weights__' + date.today().isoformat() + "__" + "{}-{}".format(str(now.hour).zfill(2), str(now.minute).zfill(2))
+    print("Saving model weights as " + filename)
+    model.save_weights(filename)
         
 
 
