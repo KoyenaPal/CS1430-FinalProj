@@ -22,7 +22,7 @@ def sec2hms(sec):
     sec_m = sec//60
     sec -= sec_m * 60
 
-    return sec_h, sec_m, sec
+    return str(sec_h).zfill(2), str(sec_m).zfill(2), str(sec).zfill(2)
         
 
 
@@ -63,7 +63,7 @@ def main():
         exptr = diff * (hp.num_epochs - (epoch + 1))
         diff_s = "{}:{}:{}".format(*sec2hms(diff))
         exptr_s = "{}:{}:{}".format(*sec2hms(exptr))
-        template = 'Epoch {}, Loss: {}, Time: {}, Expected time remaining: {}'
+        template = 'Epoch {}, \tLoss: {}, \tTime: {}, \tExpected time remaining: {}'
         print (template.format(epoch+1, train_metric.result(), diff_s, exptr_s))
 
     gen = shapes_gen(english=True)
