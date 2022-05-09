@@ -177,7 +177,7 @@ def _make_shapes_batch_iters(dir_path, english=False):
 
 
 
-def _make_coco_batch_iters(dir_path, anno_path, prepper, english=False):
+def _make_coco_pairs(dir_path, anno_path, english=False):
 
     filenames = {}
     descs = {}
@@ -209,14 +209,17 @@ def _make_coco_batch_iters(dir_path, anno_path, prepper, english=False):
         for desc in descs[img_id]:
             pairs.append((fname, desc))
 
-    random.shuffle(pairs)
-        
     n_pairs = len(pairs)
     rounded = n_pairs - (n_pairs % hp.batch_size)
     n_batches = rounded / hp.batch_size
     n_batches = int(n_batches)
 
     pairs = pairs[:rounded]
+    return pairs
+
+def _make_coco_batch_iters(pairs):
+    assert(len(pairs) % hp.batch_size == 0)
+    n_batches = len(pairs) // hp.batch_size
     filenames, descs = zip(*pairs)
         
     fchunks = np.split(np.array(filenames), n_batches)
@@ -225,7 +228,6 @@ def _make_coco_batch_iters(dir_path, anno_path, prepper, english=False):
     for i in range(n_batches):
         imgs = np.array([_load_image(f) for f in fchunks[i]])
         vchunks = bert.encode(dchunks[i])
-        # vchunks = np.zeros((hp.batch_size, 384))
         yield (imgs, vchunks), imgs
 
 
@@ -240,6 +242,7 @@ def _make_coco_batch_iters(dir_path, anno_path, prepper, english=False):
 # _coco_ender = _make_ender(coco_mean, coco_std)
 
 
+coco_pairs = _make_coco_pairs(hp.path_to_coco_img_dir, hp.path_to_coco_annos, False)
 
 def shapes_gen(english=False):
     """Returns a fresh iterator over all shapes batches each call"""
@@ -247,4 +250,5 @@ def shapes_gen(english=False):
 
 def coco_gen(english=False):
     """Returns a fresh iterator over all coco batches each call"""
-    return _make_coco_batch_iters(hp.path_to_coco_img_dir, hp.path_to_coco_annos, english)
+    random.shuffle(coco_pairs)
+    return _make_coco_batch_iters(coco_pairs)
