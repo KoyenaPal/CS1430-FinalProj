@@ -44,4 +44,4 @@ preprocess_sample_size = 400
 Defines the number of training examples per batch.
 You don't need to modify this.
 """
-batch_size = 64
+batch_size = 32

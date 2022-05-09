@@ -118,8 +118,6 @@ def coco_main():
         gen = coco_gen()
         start = time.time()
 
-        print(f"Epoch {epoch}: ", end="", flush=True)
-
         for batch, (x, y) in enumerate(gen):
             Holly.train_on_batch(x, y)
 
@@ -128,7 +126,7 @@ def coco_main():
         exptr = diff * (hp.num_epochs - (epoch + 1))
         diff_s = "{}:{}:{}".format(*sec2hms(diff))
         exptr_s = "{}:{}:{}".format(*sec2hms(exptr))
-        template = '\tLoss: {}, \tTime: {}, \tExpected time remaining: {}'
+        template = 'Epoch {epoch}: \tLoss: {}, \tTime: {}, \tExpected time remaining: {}'
         print (template.format(epoch+1, train_metric.result(), diff_s, exptr_s))
 
         if epoch % 100 == 0:
