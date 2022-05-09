@@ -43,7 +43,6 @@ def main():
 
         for batch, (x, y) in enumerate(gen):
             Holly.train_on_batch(x, y)
-            tf.summary.scalar('loss', train_metric.result(), step=batch)
 
         template = 'Epoch {}, Loss: {}'
         print (template.format(epoch+1, train_metric.result()))
