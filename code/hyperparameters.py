@@ -20,12 +20,12 @@ A critical parameter that can dramatically affect whether training
 succeeds or fails. The value for this depends significantly on which
 optimizer is used. Refer to the default learning rate parameter
 """ 
-learning_rate = 1e-3
+learning_rate = 1e-2
 
 """
 Momentum on the gradient (if you use a momentum-based optimizer)
 """
-momentum = 0.01
+momentum = 0.8
 
 """
 Resize image size for task 1. Task 3 must have an image size of 224,
@@ -39,13 +39,6 @@ training data. This many images will be randomly seleted to be read
 into memory temporarily.
 """
 preprocess_sample_size = 400
-
-"""
-Maximum number of weight files to save to checkpoint directory. If
-set to a number <= 0, then all weight files of every epoch will be
-saved. Otherwise, only the weights with highest accuracy will be saved.
-"""
-max_num_weights = -1
 
 """
 Defines the number of training examples per batch.

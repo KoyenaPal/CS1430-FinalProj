@@ -23,6 +23,11 @@ def sec2hms(sec):
     sec -= sec_m * 60
 
     return str(sec_h).zfill(2), str(sec_m).zfill(2), str(sec).zfill(2)
+
+def save_weights(model):
+    print("Saving model weights...")
+    now = datetime.now()
+    model.save_weights('./checkpoints/weights__' + date.today().isoformat() + "__" + "{}-{}".format(str(now.hour).zfill(2), str(now.minute).zfill(2)))
         
 
 
@@ -66,11 +71,10 @@ def main():
         template = 'Epoch {}, \tLoss: {}, \tTime: {}, \tExpected time remaining: {}'
         print (template.format(epoch+1, train_metric.result(), diff_s, exptr_s))
 
-    gen = shapes_gen(english=True)
+        if epoch % 100 == 0:
+            save_weights(Holly)
 
-    print("Saving model weights...")
-    now = datetime.now()
-    Holly.save_weights('./checkpoints/weights__' + date.today().isoformat() + "__" + "{}-{}".format(str(now.hour).zfill(2), str(now.minute).zfill(2)))
+    gen = shapes_gen(english=True)
 
     print("Saving generated image selection...")
     for batch, ((imgs, shapes), _) in enumerate(gen):
