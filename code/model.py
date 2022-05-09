@@ -22,6 +22,10 @@ imgs_inputs = keras.Input(shape=(hp.img_size, hp.img_size, 3))
 
 conv = layers.Conv2D(8, 3, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(imgs_inputs)
 conv = layers.LayerNormalization(axis=[1,2])(conv)
+# (256, 256, 8)
+
+conv = layers.Conv2D(8, 3, activation=act, strides=2, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(imgs_inputs)
+conv = layers.LayerNormalization(axis=[1,2])(conv)
 # (126, 126, 8)
 
 conv = layers.Conv2D(16, 3, activation=act, strides=2, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(conv)
@@ -55,10 +59,10 @@ flat = layers.LayerNormalization(axis=[1])(flat)
 
 
 ########## Sentence embedding
-embed_inputs = keras.Input(shape=(4,))
-embed = layers.Dense(128, activation=act, bias_initializer='glorot_uniform')(embed_inputs)
+embed_inputs = keras.Input(shape=(384,))
+embed = layers.Dense(384, activation=act, bias_initializer='glorot_uniform')(embed_inputs)
 embed = layers.LayerNormalization(axis=[1])(embed)
-embed = layers.Dense(128, activation=act, bias_initializer='glorot_uniform')(embed)
+embed = layers.Dense(384, activation=act, bias_initializer='glorot_uniform')(embed)
 embed = layers.LayerNormalization(axis=[1])(embed)
 
 
@@ -67,26 +71,26 @@ embed = layers.LayerNormalization(axis=[1])(embed)
 ########## Bottleneck (concatenating sentence embedding + latent image)
 ########## Later layers of the bottleneck get residuals of initial concatenation, so they don't have to remember semantics
 
-# concat = layers.Concatenate()([flat, embed])
-# combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(concat)
-# combo = layers.LayerNormalization(axis=[1])(combo)
-# combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
-# combo = layers.LayerNormalization(axis=[1])(combo)
-# combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
-# combo = layers.LayerNormalization(axis=[1])(combo)
-# combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
-# combo = layers.LayerNormalization(axis=[1])(combo)
+concat = layers.Concatenate()([flat, embed])
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(concat)
+combo = layers.LayerNormalization(axis=[1])(combo)
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
+combo = layers.LayerNormalization(axis=[1])(combo)
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
+combo = layers.LayerNormalization(axis=[1])(combo)
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
+combo = layers.LayerNormalization(axis=[1])(combo)
 
-combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(flat)
-combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(combo)
-combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(54, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(combo)
-combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, embed]))
-combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, embed]))
-combo = layers.LayerNormalization(axis=[1])(combo)
+# combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(flat)
+# combo = layers.LayerNormalization(axis=[1])(combo)
+# combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(combo)
+# combo = layers.LayerNormalization(axis=[1])(combo)
+# combo = layers.Dense(54, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(combo)
+# combo = layers.LayerNormalization(axis=[1])(combo)
+# combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, embed]))
+# combo = layers.LayerNormalization(axis=[1])(combo)
+# combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, embed]))
+# combo = layers.LayerNormalization(axis=[1])(combo)
 
 
 
@@ -100,9 +104,11 @@ deconv = layers.Conv2DTranspose(16, 3, strides=2, activation=act, kernel_regular
 deconv = layers.LayerNormalization(axis=[1, 2])(deconv)
 deconv = layers.Conv2DTranspose(16, 3, strides=2, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
 deconv = layers.LayerNormalization(axis=[1, 2])(deconv)
+deconv = layers.Conv2DTranspose(16, 3, strides=2, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
+deconv = layers.LayerNormalization(axis=[1, 2])(deconv)
 deconv = layers.Conv2DTranspose(16, 3, strides=2, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
 deconv = layers.LayerNormalization(axis=[1, 2])(deconv)
-deconv = layers.Conv2D(3, 16, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
+deconv = layers.Conv2D(3, 32, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
 
 outputs = deconv
 print(outputs)  # shape sanity check

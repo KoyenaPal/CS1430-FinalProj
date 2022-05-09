@@ -14,6 +14,7 @@ import hyperparameters as hp
 
 
 _bert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+bert = _bert_model
 
 
 
@@ -190,39 +191,42 @@ def _make_coco_batch_iters(dir_path, anno_path, prepper, english=False):
 
     anno_file = open(anno_path)
     data = json.load(anno_file)
-    print(data.keys())
     img_info = data['annotations']
 
-    for d in img_info:
+    info_len = len(img_info)
+    print(info_len)
+    print("loading descriptions... [", end="", flush=True)
+    for i, d in enumerate(img_info):
         embed = d['caption']
-        if english:
-            embed = _bert_model.encode(d['caption'])
+        if not english:
+            embed = _bert_model.encode(embed)
         descs[d['image_id']].append(embed)
 
-    print(descs)
-    print(filenames)
+        if (i+1) % (hp.batch_size*8) == 0:
+            print("-", end="", flush=True)
+    print("]")
 
     pairs = []
 
-    for img_id, fname in filenames:
+    for img_id, fname in filenames.items():
         for desc in descs[img_id]:
-            pairs.append(fname, desc)
+            pairs.append((fname, desc))
+
+    random.shuffle(pairs)
         
     n_pairs = len(pairs)
     rounded = n_pairs - (n_pairs % hp.batch_size)
     n_batches = rounded / hp.batch_size
     n_batches = int(n_batches)
 
-    pairs = np.array(pairs[:rounded])
-    np.random.shuffle(pairs)
-
-    filenames, descs = list(zip(*pairs))
+    pairs = pairs[:rounded]
+    filenames, descs = zip(*pairs)
         
     fchunks = np.split(np.array(filenames), n_batches)
     dchunks = np.split(np.array(descs), n_batches)
 
     for i in range(n_batches):
-        imgs = np.array([_load_image(f, prepper) for f in fchunks[i]])
+        imgs = np.array([_load_image(f) for f in fchunks[i]])
         yield (imgs, dchunks[i]), imgs
 
 
