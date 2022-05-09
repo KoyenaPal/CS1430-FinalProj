@@ -1,5 +1,5 @@
 import random
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 import time
 import os
 
@@ -25,7 +25,7 @@ def sec2hms(sec):
     return str(sec_h).zfill(2), str(sec_m).zfill(2), str(sec).zfill(2)
 
 def save_weights(model):
-    now = datetime.now()
+    now = datetime.now(timezone(timedelta(hours=-4)))
     filename = './checkpoints/weights__' + date.today().isoformat() + "__" + "{}-{}".format(str(now.hour).zfill(2), str(now.minute).zfill(2))
     print("Saving model weights as " + filename)
     model.save_weights(filename)
@@ -74,6 +74,8 @@ def main():
 
         if epoch % 100 == 0:
             save_weights(Holly)
+
+    save_weights(Holly)
 
 
 
