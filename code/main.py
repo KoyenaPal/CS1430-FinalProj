@@ -132,7 +132,7 @@ def coco_main():
         template = 'Epoch {}: \tLoss: {}, \tTime: {}, \tExpected time remaining: {}'
         print (template.format(epoch+1, train_metric.result(), diff_s, exptr_s))
 
-        if epoch % 100 == 0:
+        if (epoch+1) % 25 == 0:
             save_weights(Holly)
 
     save_weights(Holly)
