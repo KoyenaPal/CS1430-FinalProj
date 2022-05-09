@@ -5,7 +5,7 @@ import os
 
 import tensorflow as tf
 
-from prep import shapes_gen, save_shapes_image, save_coco_image, shape_embed
+from prep import shapes_gen, save_shapes_image, shape_embed
 from utils import CustomModelSaver
 from model import Holly
 import hyperparameters as hp

@@ -3,6 +3,8 @@
 /augments/
 /code/augments/
 /code/checkpoints/
+/code/eval/
+/code/priority/
 /activate
 __pycache__/
 logs/
