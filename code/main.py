@@ -61,9 +61,9 @@ def main():
         shape = shapes[ind]
         shapevec = shape_embed([shape])
         output = Holly((img, shapevec)).numpy()[0]
-        # print(output.shape)
 
-        save_shapes_image(output, "./augments/"+shape+str(batch)+".png")
+        save_shapes_image(output, "./augments/"+shape+str(batch)+"-generated.png")
+        save_shapes_image(img[0], "./augments/"+shape+str(batch)+"-input.png")
 
         
 
