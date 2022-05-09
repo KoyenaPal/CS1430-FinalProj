@@ -98,16 +98,17 @@ def main():
 
 def coco_main():
 
-    # for root, _, files in os.walk("./checkpoints/"):
-    #     files = sorted(files, reverse=True)
-    #     print(files)
-    #     for f in files:
-    #         l,m,r = f.partition('.')
-    #         if r == 'index':
-    #             Holly.load_weights('./checkpoints/' + l)
-    #             print("Found model to continue training!")
-    #             break
-    #     break
+    for root, _, files in os.walk("./checkpoints/"):
+        files = sorted(files, reverse=True)
+        print(files)
+        for f in files:
+            l,m,r = f.partition('.')
+            if r == 'index':
+                Holly.load_weights('./checkpoints/' + l)
+                print("Found model to continue training!")
+                print("Loading " + root + "/" + l)
+                break
+        break
             
 
     train_loss = tf.keras.losses.MeanSquaredError()
