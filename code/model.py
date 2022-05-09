@@ -66,8 +66,8 @@ embed = layers.LayerNormalization(axis=[1])(embed)
 
 ########## Bottleneck (concatenating sentence embedding + latent image)
 ########## Later layers of the bottleneck get residuals of initial concatenation, so they don't have to remember semantics
-concat = layers.Concatenate()([flat, embed])
 
+# concat = layers.Concatenate()([flat, embed])
 # combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(concat)
 # combo = layers.LayerNormalization(axis=[1])(combo)
 # combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
@@ -77,15 +77,15 @@ concat = layers.Concatenate()([flat, embed])
 # combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
 # combo = layers.LayerNormalization(axis=[1])(combo)
 
-combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(concat)
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(flat)
 combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(combo)
 combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(48, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
+combo = layers.Dense(54, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(combo)
 combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo]))
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, embed]))
 combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo]))
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, embed]))
 combo = layers.LayerNormalization(axis=[1])(combo)
 
 
