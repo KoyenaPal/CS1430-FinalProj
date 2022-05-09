@@ -16,17 +16,18 @@ def my_loss_fn(y_true, y_pred):
     return tf.reduce_mean(squared_difference, axis=[1,2])
 
 def sec2hms(sec):
+    sec = int(sec)
     sec_h = sec//3600
     sec -= sec_h * 3600
     sec_m = sec//60
-    sec -= sec* 60
+    sec -= sec_m * 60
 
     return sec_h, sec_m, sec
         
 
 
 def main():
-    
+
     for root, _, files in os.walk("./checkpoints/"):
         files = sorted(files, reverse=True)
         print(files)
