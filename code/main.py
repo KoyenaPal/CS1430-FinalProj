@@ -28,7 +28,8 @@ def main():
         break
             
 
-    train_loss = my_loss_fn
+    # train_loss = my_loss_fn
+    train_loss = tf.keras.losses.MeanSquaredError()
     train_metric = tf.keras.metrics.MeanSquaredError()
     optimizer = tf.keras.optimizers.SGD(learning_rate=hp.learning_rate, momentum=hp.momentum)
 
