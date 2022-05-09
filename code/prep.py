@@ -224,8 +224,8 @@ def _make_coco_batch_iters(dir_path, anno_path, prepper, english=False):
 
     for i in range(n_batches):
         imgs = np.array([_load_image(f) for f in fchunks[i]])
-        # vchunks = bert.encode(dchunks[i])
-        vchunks = np.zeros((hp.batch_size, 384))
+        vchunks = bert.encode(dchunks[i])
+        # vchunks = np.zeros((hp.batch_size, 384))
         yield (imgs, vchunks), imgs
 
 

@@ -21,10 +21,6 @@ imgs_inputs = keras.Input(shape=(hp.img_size, hp.img_size, 3))
 
 conv = layers.Conv2D(8, 3, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(imgs_inputs)
 conv = layers.LayerNormalization(axis=[1,2])(conv)
-# (256, 256, 8)
-
-conv = layers.Conv2D(8, 3, activation="leaky_relu", strides=2, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(imgs_inputs)
-conv = layers.LayerNormalization(axis=[1,2])(conv)
 # (126, 126, 8)
 
 conv = layers.Conv2D(16, 3, activation="leaky_relu", strides=2, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(conv)
@@ -51,7 +47,7 @@ conv = layers.LayerNormalization(axis=[1,2])(conv)
 
 ########## Image flattening, final dense processing before concatenation
 flat = layers.Flatten()(conv)
-flat = layers.Dense(1024, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(flat)
+flat = layers.Dense(768, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(flat)
 flat = layers.LayerNormalization(axis=[1])(flat)
 
 
@@ -103,11 +99,9 @@ deconv = layers.Conv2DTranspose(16, 3, strides=2, activation="leaky_relu", kerne
 deconv = layers.LayerNormalization(axis=[1, 2])(deconv)
 deconv = layers.Conv2DTranspose(16, 3, strides=2, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
 deconv = layers.LayerNormalization(axis=[1, 2])(deconv)
-deconv = layers.Conv2DTranspose(16, 3, strides=2, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
-deconv = layers.LayerNormalization(axis=[1, 2])(deconv)
 deconv = layers.Conv2DTranspose(16, 3, strides=2, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
 deconv = layers.LayerNormalization(axis=[1, 2])(deconv)
-deconv = layers.Conv2D(3, 32, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
+deconv = layers.Conv2D(3, 16, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
 
 outputs = deconv
 print(outputs)  # shape sanity check
