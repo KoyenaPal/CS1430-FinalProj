@@ -11,7 +11,7 @@ def bias_l2():
 def kernel_l2():
     return tf.keras.regularizers.l2(l2=1e-3)
 
-# avoid regularization/dropout at transition points, and on embeddings
+# avoid dropout at transition points, and on embeddings, since those seem less likely to be "smooth"?
 # avoid activation near end, since colors aren't binary
 
 
@@ -46,7 +46,7 @@ conv = layers.LayerNormalization(axis=[1,2])(conv)
 
 
 
-########## Image flattening
+########## Image flattening, final dense processing before concatenation
 flat = layers.Flatten()(conv)
 flat = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(flat)
 flat = layers.LayerNormalization(axis=[1])(flat)
@@ -55,9 +55,6 @@ flat = layers.LayerNormalization(axis=[1])(flat)
 
 
 ########## Sentence embedding
-# embed_inpus = keras.Input(shape=(384,))  # We probably won't actually need 384 vals, so learn resizing to 128
-# embed = layers.Dense(128, activation=act)(embed_inpus)
-# embed = layers.Dense(128, activation=act)(embed)
 embed_inputs = keras.Input(shape=(4,))
 embed = layers.Dense(128, activation=act, bias_initializer='glorot_uniform')(embed_inputs)
 embed = layers.LayerNormalization(axis=[1])(embed)
@@ -67,21 +64,24 @@ embed = layers.LayerNormalization(axis=[1])(embed)
 
 
 
-########## Bottleneck (concatenating embedding + latent image)
-combo = layers.Concatenate()([flat, embed])
-combo = layers.Dense(1024, activation=act, bias_initializer='glorot_uniform')(combo)
+########## Bottleneck (concatenating sentence embedding + latent image)
+########## Later layers of the bottleneck get residuals of initial concatenation, so they don't have to remember semantics
+concat = layers.Concatenate()([flat, embed])
+
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(concat)
 combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(1024, activation=act, bias_initializer='glorot_uniform')(combo)
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
 combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(combo)
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
 combo = layers.LayerNormalization(axis=[1])(combo)
-combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(combo)
+combo = layers.Dense(1024, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
 combo = layers.LayerNormalization(axis=[1])(combo)
 
 
 
 
 ########## Deconvolution (growing)
+########## No activation on final 2 layers since values of color channels are evenly distributed
 deconv = layers.Reshape((8, 8, 16))(combo)
 deconv = layers.Conv2DTranspose(16, 3, strides=2, activation=act, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
 deconv = layers.LayerNormalization(axis=[1, 2])(deconv)
@@ -91,9 +91,9 @@ deconv = layers.Conv2DTranspose(16, 3, strides=2, activation=act, kernel_regular
 deconv = layers.LayerNormalization(axis=[1, 2])(deconv)
 deconv = layers.Conv2DTranspose(16, 3, strides=2, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
 deconv = layers.LayerNormalization(axis=[1, 2])(deconv)
-deconv = layers.Conv2D(3, 16, bias_initializer='glorot_uniform')(deconv)
+deconv = layers.Conv2D(3, 16, kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(deconv)
 
 outputs = deconv
-print(outputs)
+print(outputs)  # shape sanity check
 
 Holly = keras.Model(inputs=(imgs_inputs, embed_inputs), outputs=outputs, name="holly")

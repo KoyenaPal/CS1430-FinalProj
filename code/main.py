@@ -33,16 +33,16 @@ def save_weights(model):
 
 def main():
 
-    for root, _, files in os.walk("./checkpoints/"):
-        files = sorted(files, reverse=True)
-        print(files)
-        for f in files:
-            l,m,r = f.partition('.')
-            if r == 'index':
-                Holly.load_weights('./checkpoints/' + l)
-                print("Found model to continue training!")
-                break
-        break
+    # for root, _, files in os.walk("./checkpoints/"):
+    #     files = sorted(files, reverse=True)
+    #     print(files)
+    #     for f in files:
+    #         l,m,r = f.partition('.')
+    #         if r == 'index':
+    #             Holly.load_weights('./checkpoints/' + l)
+    #             print("Found model to continue training!")
+    #             break
+    #     break
             
 
     # train_loss = my_loss_fn
@@ -73,6 +73,8 @@ def main():
 
         if epoch % 100 == 0:
             save_weights(Holly)
+
+
 
     gen = shapes_gen(english=True)
 
