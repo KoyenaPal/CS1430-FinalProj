@@ -73,8 +73,6 @@ def _load_image(path, augment=False):
 
 def save_image(img, path):
     img = (img + 1.) * 127.5
-    print(np.max(img))
-    print(np.min(img))
     img = img.astype(np.uint8)
     img = Image.fromarray(img)
     img.save(path)
@@ -210,7 +208,6 @@ def _make_shapes_batch_iters(dir_path, english=False):
     s_chunks = np.split(np.array(shapes), n_batches)
     fout_chunks = np.split(np.array(fname_outs), n_batches)
 
-    print(n_batches)
     for i in range(n_batches):
         imgs_in = np.array([_load_image(f) for f in fin_chunks[i]])
         imgs_out = np.array([_load_image(f) for f in fout_chunks[i]])
