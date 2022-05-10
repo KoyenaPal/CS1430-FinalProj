@@ -13,7 +13,7 @@ Number of epochs. If you experiment with more complex networks you
 might need to increase this. Likewise if you add regularization that
 slows training.
 """
-num_epochs = 500
+num_epochs = 1
 
 """
 A critical parameter that can dramatically affect whether training
@@ -44,4 +44,4 @@ preprocess_sample_size = 400
 Defines the number of training examples per batch.
 You don't need to modify this.
 """
-batch_size = 32
+batch_size = 16

@@ -54,7 +54,7 @@ flat = layers.LayerNormalization(axis=[1])(flat)
 
 
 ########## Sentence embedding
-embed_inputs = keras.Input(shape=(384,))
+embed_inputs = keras.Input(shape=(4,))
 embed = layers.Dense(384, activation="leaky_relu", bias_initializer='glorot_uniform')(embed_inputs)
 embed = layers.LayerNormalization(axis=[1])(embed)
 embed = layers.Dense(384, activation="leaky_relu", bias_initializer='glorot_uniform')(embed)
@@ -71,8 +71,8 @@ combo = layers.Dense(1024, activation="leaky_relu", kernel_regularizer=kernel_l2
 combo = layers.LayerNormalization(axis=[1])(combo)
 combo = layers.Dense(1024, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
 combo = layers.LayerNormalization(axis=[1])(combo)
-# combo = layers.Dense(1024, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
-# combo = layers.LayerNormalization(axis=[1])(combo)
+combo = layers.Dense(1024, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
+combo = layers.LayerNormalization(axis=[1])(combo)
 combo = layers.Dense(1024, activation="leaky_relu", kernel_regularizer=kernel_l2(), bias_regularizer=bias_l2(), bias_initializer='glorot_uniform')(layers.Concatenate()([combo, concat]))
 combo = layers.LayerNormalization(axis=[1])(combo)
 
@@ -107,3 +107,4 @@ outputs = deconv
 print(outputs)  # shape sanity check
 
 Holly = keras.Model(inputs=(imgs_inputs, embed_inputs), outputs=outputs, name="holly")
+Holly_alt = keras.Model(inputs=(flat, embed_inputs), outputs=outputs, name="holly2")
