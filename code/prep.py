@@ -194,7 +194,7 @@ def _make_shapes_batch_iters(dir_path, english=False):
     trips = list(d_filenames.values())
     trips = sum(trips, [])
 
-    n_trips = 4 * hp.batch_size #len(trips)
+    n_trips = len(trips)
     rounded = n_trips - (n_trips % hp.batch_size)
     n_batches = rounded // hp.batch_size
     n_batches = int(n_batches)
