@@ -64,7 +64,7 @@ def main():
         template = 'Epoch {}, \tLoss: {}, \tTime: {}, \tExpected time remaining: {}'
         print (template.format(epoch+1, train_metric.result(), diff_s, exptr_s))
 
-        if (epoch+1) % 100 == 0:
+        if (epoch+1) % 20 == 0:
             save_weights(Holly)
 
     gen = shapes_gen(english=True)
