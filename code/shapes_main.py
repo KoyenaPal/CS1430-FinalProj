@@ -39,7 +39,7 @@ def main():
             if r == 'index':
                 Holly.load_weights(os.path.join(root, l))
                 print("Found model to continue training!")
-                print(f"Training {root}/{r}...")
+                print(f"Training {root}/{f}...")
                 break
         break
             
@@ -77,12 +77,18 @@ def main():
         shape = shapes[ind]
         shapevec = shape_embed([shape])
         output = Holly((img_in, shapevec)).numpy()[0]
-        output_rand = Holly((np.random.normal(size=(1, 128, 128, 3)), shapevec)).numpy()[0]
+        # output_rand = Holly((np.random.normal(size=(1, 128, 128, 3)), shapevec)).numpy()[0]
         output_lat = Holly_alt((np.random.normal(size=(1, 768)), shapevec)).numpy()[0]
+        # output_uni = Holly_alt((np.random.uniform(size=(1, 768)), shapevec)).numpy()[0]
+        output_inv = Holly_alt((1 - np.random.normal(size=(1, 768)), shapevec)).numpy()[0]
+        output_rand_shape = Holly((img_in, np.random.uniform(size=(1, 4)))).numpy()[0]
 
         save_image(output, "./augments/"+shape+str(batch)+"-generated.png")
-        save_image(output_rand, "./augments/"+shape+str(batch)+"-rando_img.png")
+        # save_image(output_rand, "./augments/"+shape+str(batch)+"-rando_img.png")
         save_image(output_lat, "./augments/"+shape+str(batch)+"-rando_latent.png")
+        # save_image(output_uni, "./augments/"+shape+str(batch)+"-rando_uniform.png")
+        save_image(output_inv, "./augments/"+shape+str(batch)+"-rando_inverted_normal.png")
+        save_image(output_rand_shape, "./augments/"+shape+str(batch)+"-rando_shape.png")
         save_image(img_in[0], "./augments/"+shape+str(batch)+"-actual.png")
         save_image(img_out[0], "./augments/"+shape+str(batch)+"-desired.png")
 
