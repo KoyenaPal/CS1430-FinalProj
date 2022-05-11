@@ -31,7 +31,7 @@ def save_weights(model):
     model.save_weights(filename)
 
 def main():
-    for root, _, files in os.walk("./shapes_prority/"):
+    for root, _, files in os.walk("./shapes_priority/"):
         files = sorted(files, reverse=True)
         print(files)
         for f in files:
