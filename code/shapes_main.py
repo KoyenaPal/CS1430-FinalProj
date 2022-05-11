@@ -37,7 +37,7 @@ def main():
         for f in files:
             l,m,r = f.partition('.')
             if r == 'index':
-                Holly.load_weights('./checkpoints/' + l)
+                Holly.load_weights(os.path.join(root, l))
                 print("Found model to continue training!")
                 print(f"Training {root}/{r}...")
                 break
